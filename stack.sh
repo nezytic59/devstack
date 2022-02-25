@@ -292,10 +292,14 @@ function _install_epel {
 }
 
 function _install_rdo {
-    # NOTE(ianw) 2020-04-30 : when we have future branches, we
-    # probably want to install the relevant branch RDO release as
-    # well.  But for now it's all master.
-    sudo dnf -y install https://rdoproject.org/repos/rdo-release.el8.rpm
+    if [[ "$TARGET_BRANCH" == "master" ]]; then
+        # rdo-release.el8.rpm points to latest RDO release, use that for master
+        sudo dnf -y install https://rdoproject.org/repos/rdo-release.el8.rpm
+    else
+        # For stable branches use corresponding release rpm
+        rdo_release=$(echo $TARGET_BRANCH | sed "s|stable/||g")
+        sudo dnf -y install https://rdoproject.org/repos/openstack-${rdo_release}/rdo-release-${rdo_release}.el8.rpm
+    fi
     sudo dnf -y update
 }
 
@@ -353,6 +357,9 @@ if [[ $DISTRO == "rhel8" ]]; then
     # PowerTools repo provides libyaml-devel required by devstack itself and
     # EPEL packages assume that the PowerTools repository is enable.
     sudo dnf config-manager --set-enabled PowerTools
+
+    # CentOS 8.3 changed the repository name to lower case.
+    sudo dnf config-manager --set-enabled powertools
 
     if [[ ${SKIP_EPEL_INSTALL} != True ]]; then
         _install_epel

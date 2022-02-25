@@ -1,2 +1,0 @@
-# devstack
-stable/victoria
